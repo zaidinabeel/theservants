@@ -148,7 +148,7 @@ async function handleAuth(request, path) {
   }
 
   // POST /api/auth/register (create new admin user)
-  if (path[2] === 'register' && request.method === 'POST') {
+  if (path[1] === 'register' && request.method === 'POST') {
     const user = authenticate(request);
     if (!user || !hasRole(user, ['super_admin'])) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });

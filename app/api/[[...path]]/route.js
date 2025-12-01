@@ -185,7 +185,7 @@ async function handleAuth(request, path) {
 
 async function handleContent(request, path) {
   // GET /api/content (get all content)
-  if (request.method === 'GET' && path.length === 2) {
+  if (request.method === 'GET' && path.length === 1) {
     try {
       const content = await ContentModel.findAll();
       const contentMap = {};

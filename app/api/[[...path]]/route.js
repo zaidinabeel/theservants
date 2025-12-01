@@ -133,7 +133,7 @@ async function handleAuth(request, path) {
   }
 
   // GET /api/auth/me
-  if (path[2] === 'me' && request.method === 'GET') {
+  if (path[1] === 'me' && request.method === 'GET') {
     const user = authenticate(request);
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

@@ -212,7 +212,7 @@ async function handleContent(request, path) {
   }
 
   // PUT /api/content/:key (update content - requires auth)
-  if (request.method === 'PUT' && path[2]) {
+  if (request.method === 'PUT' && path[1]) {
     const user = authenticate(request);
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -220,7 +220,7 @@ async function handleContent(request, path) {
 
     try {
       const { value, type } = await request.json();
-      const content = await ContentModel.upsert(path[2], value, type);
+      const content = await ContentModel.upsert(path[1], value, type);
       return NextResponse.json(content);
     } catch (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
@@ -272,9 +272,9 @@ async function handleMembers(request, path) {
   }
 
   // GET /api/members/:id
-  if (request.method === 'GET' && path[2]) {
+  if (request.method === 'GET' && path[1]) {
     try {
-      const member = await MemberModel.findById(path[2]);
+      const member = await MemberModel.findById(path[1]);
       if (!member) {
         return NextResponse.json({ error: 'Member not found' }, { status: 404 });
       }
@@ -285,7 +285,7 @@ async function handleMembers(request, path) {
   }
 
   // PUT /api/members/:id (update member - requires auth)
-  if (request.method === 'PUT' && path[2]) {
+  if (request.method === 'PUT' && path[1]) {
     const user = authenticate(request);
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -293,7 +293,7 @@ async function handleMembers(request, path) {
 
     try {
       const data = await request.json();
-      const member = await MemberModel.update(path[2], data);
+      const member = await MemberModel.update(path[1], data);
       return NextResponse.json(member);
     } catch (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
@@ -301,14 +301,14 @@ async function handleMembers(request, path) {
   }
 
   // DELETE /api/members/:id (requires auth)
-  if (request.method === 'DELETE' && path[2]) {
+  if (request.method === 'DELETE' && path[1]) {
     const user = authenticate(request);
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     try {
-      await MemberModel.delete(path[2]);
+      await MemberModel.delete(path[1]);
       return NextResponse.json({ success: true });
     } catch (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
@@ -341,7 +341,7 @@ async function handlePayments(request, path) {
   }
 
   // POST /api/payments/order (create payment order for one-time donation)
-  if (path[2] === 'order' && request.method === 'POST') {
+  if (path[1] === 'order' && request.method === 'POST') {
     try {
       const { amount, email, name } = await request.json();
       
@@ -371,7 +371,7 @@ async function handlePayments(request, path) {
   }
 
   // POST /api/payments/subscription (create subscription for membership)
-  if (path[2] === 'subscription' && request.method === 'POST') {
+  if (path[1] === 'subscription' && request.method === 'POST') {
     try {
       const { memberId, membershipTier, email, name, phone } = await request.json();
       
@@ -413,7 +413,7 @@ async function handlePayments(request, path) {
   }
 
   // POST /api/payments/verify (verify payment)
-  if (path[2] === 'verify' && request.method === 'POST') {
+  if (path[1] === 'verify' && request.method === 'POST') {
     try {
       const { orderId, paymentId, signature, email } = await request.json();
       
@@ -450,7 +450,7 @@ async function handlePayments(request, path) {
   }
 
   // POST /api/payments/webhook (Razorpay webhook)
-  if (path[2] === 'webhook' && request.method === 'POST') {
+  if (path[1] === 'webhook' && request.method === 'POST') {
     try {
       const payload = await request.json();
       
@@ -479,7 +479,7 @@ async function handlePayments(request, path) {
   }
 
   // GET /api/payments/plans (get membership plans)
-  if (path[2] === 'plans' && request.method === 'GET') {
+  if (path[1] === 'plans' && request.method === 'GET') {
     return NextResponse.json(MEMBERSHIP_PLANS);
   }
 
@@ -523,14 +523,14 @@ async function handleGallery(request, path) {
   }
 
   // DELETE /api/gallery/:id (requires auth)
-  if (request.method === 'DELETE' && path[2]) {
+  if (request.method === 'DELETE' && path[1]) {
     const user = authenticate(request);
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     try {
-      await GalleryModel.delete(path[2]);
+      await GalleryModel.delete(path[1]);
       return NextResponse.json({ success: true });
     } catch (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
@@ -574,7 +574,7 @@ async function handleInitiatives(request, path) {
   }
 
   // PUT /api/initiatives/:id (update - requires auth)
-  if (request.method === 'PUT' && path[2]) {
+  if (request.method === 'PUT' && path[1]) {
     const user = authenticate(request);
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -582,7 +582,7 @@ async function handleInitiatives(request, path) {
 
     try {
       const data = await request.json();
-      const initiative = await InitiativeModel.update(path[2], data);
+      const initiative = await InitiativeModel.update(path[1], data);
       return NextResponse.json(initiative);
     } catch (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
@@ -590,14 +590,14 @@ async function handleInitiatives(request, path) {
   }
 
   // DELETE /api/initiatives/:id (requires auth)
-  if (request.method === 'DELETE' && path[2]) {
+  if (request.method === 'DELETE' && path[1]) {
     const user = authenticate(request);
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     try {
-      await InitiativeModel.delete(path[2]);
+      await InitiativeModel.delete(path[1]);
       return NextResponse.json({ success: true });
     } catch (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
@@ -641,7 +641,7 @@ async function handleGoals(request, path) {
   }
 
   // PUT /api/goals/:id (update - requires auth)
-  if (request.method === 'PUT' && path[2]) {
+  if (request.method === 'PUT' && path[1]) {
     const user = authenticate(request);
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -649,7 +649,7 @@ async function handleGoals(request, path) {
 
     try {
       const data = await request.json();
-      await GoalModel.update(path[2], data);
+      await GoalModel.update(path[1], data);
       const goal = await GoalModel.findAll();
       return NextResponse.json(goal);
     } catch (error) {
@@ -658,14 +658,14 @@ async function handleGoals(request, path) {
   }
 
   // DELETE /api/goals/:id (requires auth)
-  if (request.method === 'DELETE' && path[2]) {
+  if (request.method === 'DELETE' && path[1]) {
     const user = authenticate(request);
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     try {
-      await GoalModel.delete(path[2]);
+      await GoalModel.delete(path[1]);
       return NextResponse.json({ success: true });
     } catch (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
@@ -688,7 +688,7 @@ async function handleEmail(request, path) {
   }
 
   // POST /api/email/newsletter
-  if (path[2] === 'newsletter' && request.method === 'POST') {
+  if (path[1] === 'newsletter' && request.method === 'POST') {
     try {
       const { subject, content } = await request.json();
       const result = await sendNewsletter(subject, content);
@@ -699,7 +699,7 @@ async function handleEmail(request, path) {
   }
 
   // POST /api/email/custom
-  if (path[2] === 'custom' && request.method === 'POST') {
+  if (path[1] === 'custom' && request.method === 'POST') {
     try {
       const { to, subject, html } = await request.json();
       const result = await sendEmail({ to, subject, html });
@@ -710,7 +710,7 @@ async function handleEmail(request, path) {
   }
 
   // GET /api/email/logs
-  if (path[2] === 'logs' && request.method === 'GET') {
+  if (path[1] === 'logs' && request.method === 'GET') {
     try {
       const logs = await EmailLogModel.findAll();
       return NextResponse.json(logs);

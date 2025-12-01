@@ -199,9 +199,9 @@ async function handleContent(request, path) {
   }
 
   // GET /api/content/:key
-  if (request.method === 'GET' && path[2]) {
+  if (request.method === 'GET' && path[1]) {
     try {
-      const content = await ContentModel.findByKey(path[2]);
+      const content = await ContentModel.findByKey(path[1]);
       if (!content) {
         return NextResponse.json({ error: 'Content not found' }, { status: 404 });
       }

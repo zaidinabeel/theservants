@@ -103,7 +103,7 @@ initializeContent();
 
 async function handleAuth(request, path) {
   // POST /api/auth/login
-  if (path[2] === 'login' && request.method === 'POST') {
+  if (path[1] === 'login' && request.method === 'POST') {
     try {
       const { email, password } = await request.json();
       

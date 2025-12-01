@@ -238,7 +238,7 @@ async function handleContent(request, path) {
 
 async function handleMembers(request, path) {
   // GET /api/members (list all members - requires auth)
-  if (request.method === 'GET' && path.length === 2) {
+  if (request.method === 'GET' && path.length === 1) {
     const user = authenticate(request);
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -253,7 +253,7 @@ async function handleMembers(request, path) {
   }
 
   // POST /api/members (create member)
-  if (request.method === 'POST' && path.length === 2) {
+  if (request.method === 'POST' && path.length === 1) {
     try {
       const data = await request.json();
       const member = await MemberModel.create(data);
@@ -326,7 +326,7 @@ async function handleMembers(request, path) {
 
 async function handlePayments(request, path) {
   // GET /api/payments (list all payments - requires auth)
-  if (request.method === 'GET' && path.length === 2) {
+  if (request.method === 'GET' && path.length === 1) {
     const user = authenticate(request);
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -494,7 +494,7 @@ async function handlePayments(request, path) {
 
 async function handleGallery(request, path) {
   // GET /api/gallery (list all images)
-  if (request.method === 'GET' && path.length === 2) {
+  if (request.method === 'GET' && path.length === 1) {
     try {
       const { searchParams } = new URL(request.url);
       const category = searchParams.get('category');
@@ -507,7 +507,7 @@ async function handleGallery(request, path) {
   }
 
   // POST /api/gallery (create image - requires auth)
-  if (request.method === 'POST' && path.length === 2) {
+  if (request.method === 'POST' && path.length === 1) {
     const user = authenticate(request);
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -548,7 +548,7 @@ async function handleGallery(request, path) {
 
 async function handleInitiatives(request, path) {
   // GET /api/initiatives (list all)
-  if (request.method === 'GET' && path.length === 2) {
+  if (request.method === 'GET' && path.length === 1) {
     try {
       const initiatives = await InitiativeModel.findAll();
       return NextResponse.json(initiatives);
@@ -558,7 +558,7 @@ async function handleInitiatives(request, path) {
   }
 
   // POST /api/initiatives (create - requires auth)
-  if (request.method === 'POST' && path.length === 2) {
+  if (request.method === 'POST' && path.length === 1) {
     const user = authenticate(request);
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -615,7 +615,7 @@ async function handleInitiatives(request, path) {
 
 async function handleGoals(request, path) {
   // GET /api/goals (list all)
-  if (request.method === 'GET' && path.length === 2) {
+  if (request.method === 'GET' && path.length === 1) {
     try {
       const goals = await GoalModel.findAll();
       return NextResponse.json(goals);
@@ -625,7 +625,7 @@ async function handleGoals(request, path) {
   }
 
   // POST /api/goals (create - requires auth)
-  if (request.method === 'POST' && path.length === 2) {
+  if (request.method === 'POST' && path.length === 1) {
     const user = authenticate(request);
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

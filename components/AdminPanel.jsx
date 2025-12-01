@@ -8,7 +8,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Home, Users, CreditCard, Mail, Target, Lightbulb, Settings, LogOut, Plus, Trash2, Check, X, Download } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Home, Users, CreditCard, Mail, Target, Lightbulb, Settings, LogOut, Plus, Trash2, Check, X, Download, Image as ImageIcon, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function AdminPanel() {
@@ -20,6 +21,7 @@ export default function AdminPanel() {
   const [payments, setPayments] = useState([]);
   const [goals, setGoals] = useState([]);
   const [initiatives, setInitiatives] = useState([]);
+  const [gallery, setGallery] = useState([]);
 
   useEffect(() => {
     const savedToken = localStorage.getItem('adminToken');
@@ -85,18 +87,20 @@ export default function AdminPanel() {
 
   const fetchAllData = async () => {
     try {
-      const [contentRes, membersRes, paymentsRes, goalsRes, initiativesRes] = await Promise.all([
+      const [contentRes, membersRes, paymentsRes, goalsRes, initiativesRes, galleryRes] = await Promise.all([
         fetch('/api/content'),
         fetchWithAuth('/api/members'),
         fetchWithAuth('/api/payments'),
         fetch('/api/goals'),
-        fetch('/api/initiatives')
+        fetch('/api/initiatives'),
+        fetch('/api/gallery')
       ]);
       setContent(await contentRes.json());
       setMembers(await membersRes.json());
       setPayments(await paymentsRes.json());
       setGoals(await goalsRes.json());
       setInitiatives(await initiativesRes.json());
+      setGallery(await galleryRes.json());
     } catch (error) {
       console.error('Error fetching data:', error);
     }
@@ -137,7 +141,13 @@ export default function AdminPanel() {
       await fetchWithAuth('/api/goals', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: fd.get('title'), description: fd.get('description'), icon: 'target', order: goals.length + 1 }),
+        body: JSON.stringify({ 
+          title: fd.get('title'), 
+          description: fd.get('description'),
+          imageUrl: fd.get('imageUrl') || 'https://via.placeholder.com/400x300/001F3F/D4AF37',
+          icon: 'target', 
+          order: goals.length + 1 
+        }),
       });
       toast.success('Goal added');
       fetchAllData();
@@ -151,6 +161,39 @@ export default function AdminPanel() {
     if (!confirm('Delete?')) return;
     try {
       await fetchWithAuth(`/api/goals/${id}`, { method: 'DELETE' });
+      toast.success('Deleted');
+      fetchAllData();
+    } catch (error) {
+      toast.error('Failed');
+    }
+  };
+
+  const addGalleryImage = async (e) => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    try {
+      await fetchWithAuth('/api/gallery', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: fd.get('title'),
+          description: fd.get('description'),
+          imageUrl: fd.get('imageUrl'),
+          category: 'initiative'
+        }),
+      });
+      toast.success('Image added');
+      fetchAllData();
+      e.target.reset();
+    } catch (error) {
+      toast.error('Failed');
+    }
+  };
+
+  const deleteGalleryImage = async (id) => {
+    if (!confirm('Delete?')) return;
+    try {
+      await fetchWithAuth(`/api/gallery/${id}`, { method: 'DELETE' });
       toast.success('Deleted');
       fetchAllData();
     } catch (error) {
@@ -211,31 +254,32 @@ export default function AdminPanel() {
 
       <div className="container mx-auto px-4 py-8">
         <Tabs defaultValue="dashboard" className="space-y-6">
-          <TabsList className="grid grid-cols-3 lg:grid-cols-6 gap-2 bg-white p-2 rounded-lg shadow">
+          <TabsList className="grid grid-cols-3 lg:grid-cols-7 gap-2 bg-white p-2 rounded-lg shadow">
             <TabsTrigger value="dashboard"><Home className="h-4 w-4 mr-2" />Dashboard</TabsTrigger>
             <TabsTrigger value="content"><Settings className="h-4 w-4 mr-2" />Content</TabsTrigger>
             <TabsTrigger value="members"><Users className="h-4 w-4 mr-2" />Members</TabsTrigger>
             <TabsTrigger value="payments"><CreditCard className="h-4 w-4 mr-2" />Payments</TabsTrigger>
             <TabsTrigger value="goals"><Target className="h-4 w-4 mr-2" />Goals</TabsTrigger>
+            <TabsTrigger value="gallery"><ImageIcon className="h-4 w-4 mr-2" />Gallery</TabsTrigger>
             <TabsTrigger value="initiatives"><Lightbulb className="h-4 w-4 mr-2" />Initiatives</TabsTrigger>
           </TabsList>
 
           <TabsContent value="dashboard">
             <div className="grid md:grid-cols-4 gap-6">
-              <Card><CardHeader><CardTitle className="text-sm">Total Members</CardTitle></CardHeader><CardContent><p className="text-3xl font-bold text-deep-blue">{members.length}</p></CardContent></Card>
+              <Card><CardHeader><CardTitle className="text-sm">Members</CardTitle></CardHeader><CardContent><p className="text-3xl font-bold text-deep-blue">{members.length}</p></CardContent></Card>
               <Card><CardHeader><CardTitle className="text-sm">Pending</CardTitle></CardHeader><CardContent><p className="text-3xl font-bold text-gold">{members.filter(m => m.status === 'pending').length}</p></CardContent></Card>
               <Card><CardHeader><CardTitle className="text-sm">Payments</CardTitle></CardHeader><CardContent><p className="text-3xl font-bold text-green-600">₹{payments.reduce((s, p) => s + (p.amount || 0), 0)}</p></CardContent></Card>
-              <Card><CardHeader><CardTitle className="text-sm">Goals</CardTitle></CardHeader><CardContent><p className="text-3xl font-bold text-blue-600">{goals.length}</p></CardContent></Card>
+              <Card><CardHeader><CardTitle className="text-sm">Gallery</CardTitle></CardHeader><CardContent><p className="text-3xl font-bold text-blue-600">{gallery.length}</p></CardContent></Card>
             </div>
           </TabsContent>
 
           <TabsContent value="content">
             <Card>
-              <CardHeader><CardTitle>Hero Section</CardTitle></CardHeader>
+              <CardHeader><CardTitle>Website Content</CardTitle></CardHeader>
               <CardContent className="space-y-4">
                 <div><Label>Hero Title</Label><Input defaultValue={content.hero_title} onBlur={(e) => updateContent('hero_title', e.target.value)} /></div>
                 <div><Label>Hero Subtitle</Label><Textarea defaultValue={content.hero_subtitle} onBlur={(e) => updateContent('hero_subtitle', e.target.value)} /></div>
-                <div><Label>About Us</Label><Textarea rows={6} defaultValue={content.about_us} onBlur={(e) => updateContent('about_us', e.target.value)} /></div>
+                <div><Label>About Us</Label><Textarea rows={8} defaultValue={content.about_us} onBlur={(e) => updateContent('about_us', e.target.value)} /></div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -274,7 +318,7 @@ export default function AdminPanel() {
               <CardContent>
                 <Table>
                   <TableHeader>
-                    <TableRow><TableHead>Type</TableHead><TableHead>Amount</TableHead><TableHead>Status</TableHead><TableHead>Date</TableHead></TableRow>
+                    <TableRow><TableHead>Type</TableHead><TableHead>Amount</TableHead><TableHead>Status</TableHead><TableHead>Order ID</TableHead><TableHead>Date</TableHead></TableRow>
                   </TableHeader>
                   <TableBody>
                     {payments.map((p) => (
@@ -282,7 +326,8 @@ export default function AdminPanel() {
                         <TableCell><span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">{p.type}</span></TableCell>
                         <TableCell className="font-bold">₹{p.amount}</TableCell>
                         <TableCell><span className={`px-2 py-1 rounded text-xs ${p.status === 'paid' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>{p.status}</span></TableCell>
-                        <TableCell className="text-sm text-gray-500">{new Date(p.createdAt).toLocaleDateString()}</TableCell>
+                        <TableCell className="text-xs font-mono">{p.razorpayOrderId}</TableCell>
+                        <TableCell className="text-sm">{new Date(p.createdAt).toLocaleDateString()}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -293,11 +338,12 @@ export default function AdminPanel() {
 
           <TabsContent value="goals">
             <Card>
-              <CardHeader><CardTitle>Add Goal</CardTitle></CardHeader>
+              <CardHeader><CardTitle>Add Goal with Image</CardTitle></CardHeader>
               <CardContent>
                 <form onSubmit={addGoal} className="space-y-4">
                   <div><Label>Title</Label><Input name="title" required /></div>
                   <div><Label>Description</Label><Textarea name="description" required /></div>
+                  <div><Label>Image URL (optional)</Label><Input name="imageUrl" type="url" placeholder="https://example.com/image.jpg" /></div>
                   <Button type="submit"><Plus className="h-4 w-4 mr-2" />Add Goal</Button>
                 </form>
               </CardContent>
@@ -305,11 +351,45 @@ export default function AdminPanel() {
             <Card className="mt-6">
               <CardHeader><CardTitle>Goals ({goals.length})</CardTitle></CardHeader>
               <CardContent>
-                <div className="space-y-4">
+                <div className="grid md:grid-cols-2 gap-4">
                   {goals.map((g) => (
-                    <div key={g.id} className="flex justify-between p-4 border rounded">
-                      <div><h4 className="font-semibold text-deep-blue">{g.title}</h4><p className="text-sm text-gray-600">{g.description}</p></div>
+                    <div key={g.id} className="border rounded-lg p-4 flex gap-4">
+                      {g.imageUrl && <img src={g.imageUrl} alt={g.title} className="w-24 h-24 object-cover rounded" />}
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-deep-blue">{g.title}</h4>
+                        <p className="text-sm text-gray-600">{g.description}</p>
+                      </div>
                       <Button size="sm" variant="destructive" onClick={() => deleteGoal(g.id)}><Trash2 className="h-4 w-4" /></Button>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="gallery">
+            <Card>
+              <CardHeader><CardTitle>Add Gallery Image</CardTitle></CardHeader>
+              <CardContent>
+                <form onSubmit={addGalleryImage} className="space-y-4">
+                  <div><Label>Title</Label><Input name="title" required /></div>
+                  <div><Label>Description</Label><Textarea name="description" required /></div>
+                  <div><Label>Image URL</Label><Input name="imageUrl" type="url" required placeholder="https://example.com/image.jpg" /></div>
+                  <Button type="submit"><Upload className="h-4 w-4 mr-2" />Add Image</Button>
+                </form>
+              </CardContent>
+            </Card>
+            <Card className="mt-6">
+              <CardHeader><CardTitle>Gallery Images ({gallery.length})</CardTitle></CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {gallery.map((img) => (
+                    <div key={img.id} className="relative group">
+                      <img src={img.imageUrl} alt={img.title} className="w-full h-48 object-cover rounded" />
+                      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-center items-center p-2 rounded">
+                        <p className="text-white text-sm font-semibold text-center mb-2">{img.title}</p>
+                        <Button size="sm" variant="destructive" onClick={() => deleteGalleryImage(img.id)}><Trash2 className="h-3 w-3" /></Button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -321,15 +401,7 @@ export default function AdminPanel() {
             <Card>
               <CardHeader><CardTitle>Initiatives ({initiatives.length})</CardTitle></CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {initiatives.map((i) => (
-                    <div key={i.id} className="p-4 border rounded">
-                      <h4 className="font-semibold text-deep-blue">{i.title}</h4>
-                      <p className="text-sm text-gray-600">{i.description}</p>
-                      <p className="text-xs text-gray-400 mt-2">{new Date(i.date).toLocaleDateString()} • {i.location}</p>
-                    </div>
-                  ))}
-                </div>
+                <p className="text-gray-500">Initiatives are managed through the Initiatives tab. Use Gallery for photos.</p>
               </CardContent>
             </Card>
           </TabsContent>

@@ -2,57 +2,45 @@
 
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Heart, Target, CheckCircle2, Mail, Phone, MapPin, Menu, X, ArrowRight } from 'lucide-react';
+import { Heart, ArrowUp, Menu, X, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function PublicWebsite() {
   const [content, setContent] = useState({});
   const [goals, setGoals] = useState([]);
   const [initiatives, setInitiatives] = useState([]);
+  const [gallery, setGallery] = useState([]);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [donationAmount, setDonationAmount] = useState('');
+  const [showBackToTop, setShowBackToTop] = useState(false);
 
   useEffect(() => {
     fetchData();
+    
+    const handleScroll = () => {
+      setShowBackToTop(window.scrollY > 500);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   const fetchData = async () => {
     try {
-      const [contentRes, goalsRes, initiativesRes] = await Promise.all([
+      const [contentRes, goalsRes, initiativesRes, galleryRes] = await Promise.all([
         fetch('/api/content'),
         fetch('/api/goals'),
-        fetch('/api/initiatives')
+        fetch('/api/initiatives'),
+        fetch('/api/gallery')
       ]);
       
       setContent(await contentRes.json());
       setGoals(await goalsRes.json());
       setInitiatives(await initiativesRes.json());
+      setGallery(await galleryRes.json());
     } catch (error) {
       console.error('Error fetching data:', error);
-    }
-  };
-
-  const handleDonation = async (e) => {
-    e.preventDefault();
-    if (!donationAmount || donationAmount < 1) {
-      toast.error('Please enter a valid amount');
-      return;
-    }
-
-    try {
-      const res = await fetch('/api/payments/order', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: parseFloat(donationAmount), email: 'donor@example.com', name: 'Donor' }),
-      });
-      const data = await res.json();
-      toast.success(data.isMocked ? 'Payment created (Mocked)' : 'Redirecting to payment...');
-      setDonationAmount('');
-    } catch (error) {
-      toast.error('Failed to process donation');
     }
   };
 
@@ -61,159 +49,293 @@ export default function PublicWebsite() {
     setMobileMenuOpen(false);
   };
 
-  const membershipPlans = [
-    { tier: 'basic', name: 'Basic', price: 199, features: ['Monthly newsletter', 'Community updates', 'Event invitations'] },
-    { tier: 'core', name: 'Core', price: 499, features: ['All Basic features', 'Exclusive content', 'Priority events'], popular: true },
-    { tier: 'premium', name: 'Premium', price: 999, features: ['All Core features', 'VIP access', 'Recognition'] }
+  const handleContactSubmit = async (e) => {
+    e.preventDefault();
+    toast.success('Message sent successfully! We will get back to you soon.');
+    e.target.reset();
+  };
+
+  // Default goals with images if none in database
+  const defaultGoals = [
+    {
+      id: '1',
+      title: 'EDUCATION',
+      description: 'Knowledge is Love and Cure!',
+      imageUrl: 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=800',
+      points: [
+        'Providing means for quality education.',
+        'To build competitive environment and promote analytical thinking among students.',
+        'Establishing scientific and religious libraries.'
+      ]
+    },
+    {
+      id: '2',
+      title: 'EMPLOYMENT',
+      description: 'Creating Opportunities',
+      imageUrl: 'https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=800',
+      points: [
+        'Creating job opportunities.',
+        'Providing financial and technical support to local startups and businesses.'
+      ]
+    },
+    {
+      id: '3',
+      title: 'INTERNSHIP',
+      description: 'Building Skills',
+      imageUrl: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=800',
+      points: [
+        'Provide platforms for students to build up skills through technical and industrial trainings.',
+        'Provide support for advanced industrial and technical training.'
+      ]
+    },
+    {
+      id: '4',
+      title: 'CSR ACTIVITIES',
+      description: 'Social Responsibility',
+      imageUrl: 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=800',
+      points: ['Planting more than 10,000 trees across the city.']
+    }
   ];
+
+  const displayGoals = goals.length > 0 ? goals : defaultGoals;
 
   return (
     <div className="min-h-screen bg-background">
-      <nav className="fixed top-0 w-full bg-deep-blue/95 backdrop-blur-sm z-50 border-b border-gold/20">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-3">
-              <Heart className="h-8 w-8 text-gold" />
-              <span className="text-2xl font-bold text-gold">The Servants</span>
-            </div>
-            <div className="hidden md:flex items-center space-x-6">
-              <button onClick={() => scrollTo('about')} className="text-white hover:text-gold">About</button>
-              <button onClick={() => scrollTo('goals')} className="text-white hover:text-gold">Goals</button>
-              <button onClick={() => scrollTo('donate')} className="text-white hover:text-gold">Donate</button>
-              <button onClick={() => scrollTo('membership')} className="text-white hover:text-gold">Membership</button>
-              <a href="#admin" className="px-4 py-2 bg-gold text-deep-blue rounded-lg font-semibold">Admin</a>
-            </div>
-            <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="md:hidden text-white">
-              {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-            </button>
-          </div>
-          {mobileMenuOpen && (
-            <div className="md:hidden py-4 space-y-2">
-              <button onClick={() => scrollTo('about')} className="block w-full text-left px-4 py-2 text-white hover:bg-gold/10">About</button>
-              <button onClick={() => scrollTo('goals')} className="block w-full text-left px-4 py-2 text-white hover:bg-gold/10">Goals</button>
-              <button onClick={() => scrollTo('donate')} className="block w-full text-left px-4 py-2 text-white hover:bg-gold/10">Donate</button>
-              <a href="#admin" className="block w-full text-left px-4 py-2 text-gold font-semibold">Admin</a>
-            </div>
-          )}
-        </div>
-      </nav>
+      {/* Header with Video Background */}
+      <header id="home" className="relative h-screen overflow-hidden">
+        {/* Navigation */}
+        <nav className="absolute top-0 w-full z-50 bg-gradient-to-b from-black/70 to-transparent">
+          <div className="container mx-auto px-4 py-4">
+            <div className="flex items-center justify-between">
+              <img src="/img/Color logo with background.png" alt="The Servants" className="h-16 w-auto" onError={(e) => e.target.style.display = 'none'} />
+              
+              <div className="hidden md:flex items-center space-x-8">
+                <button onClick={() => window.location.href = '/payment'} className="text-white hover:text-gold transition font-semibold">Donate</button>
+                <button onClick={() => scrollTo('goals')} className="text-white hover:text-gold transition">GOALS</button>
+                <button onClick={() => scrollTo('initiatives')} className="text-white hover:text-gold transition">Initiatives</button>
+                <button onClick={() => scrollTo('contact')} className="text-white hover:text-gold transition">Contact</button>
+                <a href="#admin" className="px-4 py-2 bg-gold text-deep-blue rounded-lg font-semibold hover:bg-gold/90">Admin</a>
+              </div>
 
-      <section className="relative h-screen flex items-center justify-center text-center islamic-pattern">
-        <div className="hero-overlay absolute inset-0"></div>
-        <div className="relative z-10 container mx-auto px-4 animate-fade-in">
-          <h1 className="text-5xl md:text-7xl font-bold text-gold mb-6">
-            {content.hero_title || 'Serving Humanity with Compassion'}
+              <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="md:hidden text-white z-50">
+                {mobileMenuOpen ? <X className="h-8 w-8" /> : <Menu className="h-8 w-8" />}
+              </button>
+            </div>
+
+            {mobileMenuOpen && (
+              <div className="md:hidden absolute top-full left-0 w-full bg-deep-blue/95 backdrop-blur-md py-4 space-y-2">
+                <button onClick={() => window.location.href = '/payment'} className="block w-full text-left px-4 py-3 text-white hover:bg-gold/10">Donate</button>
+                <button onClick={() => scrollTo('goals')} className="block w-full text-left px-4 py-3 text-white hover:bg-gold/10">GOALS</button>
+                <button onClick={() => scrollTo('initiatives')} className="block w-full text-left px-4 py-3 text-white hover:bg-gold/10">Initiatives</button>
+                <button onClick={() => scrollTo('contact')} className="block w-full text-left px-4 py-3 text-white hover:bg-gold/10">Contact</button>
+                <a href="#admin" className="block w-full text-left px-4 py-3 text-gold font-semibold">Admin</a>
+              </div>
+            )}
+          </div>
+        </nav>
+
+        {/* Video Background */}
+        <video autoPlay muted loop playsInline className="absolute inset-0 w-full h-full object-cover">
+          <source src="/video/theservants.mp4" type="video/mp4" />
+        </video>
+        
+        <div className="absolute inset-0 bg-gradient-to-b from-deep-blue/50 via-deep-blue/70 to-deep-blue"></div>
+
+        {/* Hero Content */}
+        <div className="relative z-10 h-full flex flex-col items-center justify-center text-center px-4">
+          <h1 className="text-5xl md:text-7xl font-bold text-white mb-8">
+            IN YOUR <span className="text-gold">SERVICE.</span> WE ARE.
           </h1>
-          <p className="text-xl md:text-2xl text-white/90 mb-8 max-w-3xl mx-auto">
-            {content.hero_subtitle || 'Join us in making a difference'}
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" onClick={() => scrollTo('donate')} className="bg-gold text-deep-blue hover:bg-gold/90 text-lg px-8 py-6">
-              Donate Now <Heart className="ml-2 h-5 w-5" />
+          <div className="flex flex-col sm:flex-row gap-4">
+            <Button size="lg" onClick={() => scrollTo('goals')} className="bg-transparent border-2 border-gold text-gold hover:bg-gold hover:text-deep-blue text-lg px-8 py-6">
+              OUR GOALS
             </Button>
-            <Button size="lg" variant="outline" onClick={() => scrollTo('about')} className="border-2 border-gold text-gold hover:bg-gold hover:text-deep-blue text-lg px-8 py-6">
-              Learn More <ArrowRight className="ml-2 h-5 w-5" />
+            <Button size="lg" onClick={() => window.location.href = '/payment'} className="bg-gold text-deep-blue hover:bg-gold/90 text-lg px-8 py-6">
+              DONATE
             </Button>
           </div>
+          
+          <button onClick={() => scrollTo('about')} className="absolute bottom-10 animate-bounce">
+            <ChevronDown className="h-12 w-12 text-gold" />
+          </button>
         </div>
-      </section>
+      </header>
 
+      {/* About Us */}
       <section id="about" className="py-20 bg-white">
         <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto text-center">
-            <h2 className="text-4xl font-bold text-deep-blue mb-6">About Us</h2>
-            <div className="w-20 h-1 bg-gold mx-auto mb-8"></div>
-            <p className="text-lg text-gray-700 leading-relaxed">{content.about_us || 'Loading...'}</p>
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            <div>
+              <h2 className="text-4xl font-bold text-deep-blue mb-6">About Us</h2>
+              <p className="text-lg text-gray-700 leading-relaxed">
+                {content.about_us || `The Servants is a group of serious and committed people of the community, who are determined to pave the way for the reappearance of the Imam(A.S) of our time. Experts believe that the greatest asset of any nation and community is its young generation. It's because the responsibility for the development of the community rests on the shoulders of the youth of the community. That is why in every age the youth of the community has been on the target of the enemy. The Servants Group is committed to protect this precious asset.`}
+              </p>
+            </div>
+            <div className="flex justify-center">
+              <img src="/img/Color logo with background.png" alt="The Servants" className="max-w-md w-full" onError={(e) => e.target.src = 'https://via.placeholder.com/400x400/001F3F/D4AF37?text=The+Servants'} />
+            </div>
           </div>
         </div>
       </section>
 
+      {/* Quote Section */}
+      <section className="py-16 bg-deep-blue text-white">
+        <div className="container mx-auto px-4">
+          <p className="text-xl md:text-2xl text-center italic leading-relaxed">
+            "Significance of the deeds that you have finished with a dread of Allah can't be limited, and by what method can the acts which are worthy to Allah be viewed as immaterial" 
+            <span className="block mt-4 text-gold font-semibold">~ IMAM ALI(A.S.)</span>
+          </p>
+        </div>
+      </section>
+
+      {/* Goals Section */}
       <section id="goals" className="py-20 bg-gray-50">
         <div className="container mx-auto px-4">
-          <h2 className="text-4xl font-bold text-center text-deep-blue mb-6">Our Goals</h2>
-          <div className="w-20 h-1 bg-gold mx-auto mb-12"></div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {goals.length > 0 ? goals.map((goal) => (
-              <Card key={goal.id} className="border-2 hover:border-gold transition">
-                <CardHeader>
-                  <div className="w-12 h-12 bg-gold/10 rounded-lg flex items-center justify-center mb-4">
-                    <Target className="h-6 w-6 text-gold" />
+          <h1 className="text-5xl font-bold text-center text-deep-blue mb-16 uppercase">Our Goals</h1>
+          
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {displayGoals.map((goal) => (
+              <Card key={goal.id} className="overflow-hidden hover:shadow-2xl transition-shadow">
+                <div className="relative h-64 overflow-hidden group">
+                  <img 
+                    src={goal.imageUrl || 'https://via.placeholder.com/400x300/001F3F/D4AF37'} 
+                    alt={goal.title}
+                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-deep-blue/90 to-transparent flex items-end p-4">
+                    <h3 className="text-gold text-sm font-semibold">{goal.description || goal.title}</h3>
                   </div>
+                </div>
+                <CardHeader>
                   <CardTitle className="text-xl text-deep-blue">{goal.title}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-gray-600">{goal.description}</p>
-                </CardContent>
-              </Card>
-            )) : (
-              <div className="col-span-full text-center text-gray-500">No goals added yet</div>
-            )}
-          </div>
-        </div>
-      </section>
-
-      <section id="donate" className="py-20 bg-deep-blue text-white">
-        <div className="container mx-auto px-4">
-          <div className="max-w-2xl mx-auto text-center">
-            <Heart className="h-16 w-16 text-gold mx-auto mb-6" />
-            <h2 className="text-4xl font-bold mb-6">Make a Donation</h2>
-            <p className="text-lg mb-8 text-white/90">Your contribution helps us continue our mission</p>
-            <form onSubmit={handleDonation} className="space-y-4">
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Input type="number" placeholder="Enter amount (₹)" value={donationAmount} onChange={(e) => setDonationAmount(e.target.value)} className="flex-1 text-lg py-6 bg-white" min="1" />
-                <Button type="submit" size="lg" className="bg-gold text-deep-blue hover:bg-gold/90 text-lg px-8 py-6">Donate Now</Button>
-              </div>
-              <div className="flex gap-2 justify-center">
-                {[500, 1000, 5000].map((amt) => (
-                  <Button key={amt} type="button" variant="outline" onClick={() => setDonationAmount(amt.toString())} className="border-gold text-white hover:bg-gold hover:text-deep-blue">₹{amt}</Button>
-                ))}
-              </div>
-            </form>
-          </div>
-        </div>
-      </section>
-
-      <section id="membership" className="py-20 bg-white">
-        <div className="container mx-auto px-4">
-          <h2 className="text-4xl font-bold text-center text-deep-blue mb-6">Membership Plans</h2>
-          <div className="w-20 h-1 bg-gold mx-auto mb-12"></div>
-          <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            {membershipPlans.map((plan) => (
-              <Card key={plan.tier} className={plan.popular ? 'border-4 border-gold shadow-2xl scale-105' : 'border-2'}>
-                {plan.popular && <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gold text-deep-blue px-4 py-1 rounded-full text-sm font-bold">Most Popular</div>}
-                <CardHeader className="text-center">
-                  <CardTitle className="text-2xl text-deep-blue">{plan.name}</CardTitle>
-                  <div className="mt-4">
-                    <span className="text-5xl font-bold text-gold">₹{plan.price}</span>
-                    <span className="text-gray-500">/month</span>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-3">
-                    {plan.features.map((feature, i) => (
-                      <li key={i} className="flex items-start gap-2">
-                        <CheckCircle2 className="h-5 w-5 text-gold flex-shrink-0 mt-0.5" />
-                        <span className="text-gray-700">{feature}</span>
+                  <ol className="space-y-2 text-sm text-gray-700">
+                    {(goal.points || [goal.description]).map((point, idx) => (
+                      <li key={idx} className="flex">
+                        <span className="font-bold mr-2">{idx + 1}.</span>
+                        <span>{point}</span>
                       </li>
                     ))}
-                  </ul>
+                  </ol>
                 </CardContent>
-                <CardFooter>
-                  <Button className={`w-full ${plan.popular ? 'bg-gold text-deep-blue hover:bg-gold/90' : 'bg-deep-blue text-white hover:bg-deep-blue/90'}`}>Choose Plan</Button>
-                </CardFooter>
               </Card>
             ))}
           </div>
         </div>
       </section>
 
-      <footer className="bg-deep-blue text-white py-12">
-        <div className="container mx-auto px-4 text-center">
-          <div className="flex items-center justify-center space-x-3 mb-4">
-            <Heart className="h-8 w-8 text-gold" />
-            <span className="text-2xl font-bold text-gold">The Servants</span>
+      {/* Initiatives Gallery */}
+      <section id="initiatives" className="py-20 bg-white">
+        <div className="container mx-auto px-4">
+          <h1 className="text-5xl font-bold text-center text-deep-blue mb-16 uppercase">Our Initiatives</h1>
+          
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+            {gallery.length > 0 ? gallery.map((item) => (
+              <div key={item.id} className="group relative overflow-hidden rounded-lg shadow-lg hover:shadow-2xl transition-shadow">
+                <img 
+                  src={item.imageUrl} 
+                  alt={item.title}
+                  className="w-full h-64 object-cover transition-transform duration-300 group-hover:scale-110"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-deep-blue/90 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
+                  <div className="text-white">
+                    <h3 className="font-bold text-lg">{item.title}</h3>
+                    <p className="text-sm">{item.description}</p>
+                  </div>
+                </div>
+                <div className="absolute bottom-0 left-0 right-0 bg-deep-blue/80 text-white text-center py-2 text-sm font-semibold">
+                  {item.title}
+                </div>
+              </div>
+            )) : (
+              <>
+                {['Quran Classes', 'Coaching', 'CSR Activity', 'DARS', 'Blood Donation', 'Sadqa Collection'].map((title, idx) => (
+                  <div key={idx} className="group relative overflow-hidden rounded-lg shadow-lg">
+                    <img 
+                      src={`https://images.unsplash.com/photo-${1500000000000 + idx}?w=400&h=300&fit=crop`}
+                      alt={title}
+                      className="w-full h-64 object-cover"
+                      onError={(e) => e.target.src = `https://via.placeholder.com/400x300/001F3F/D4AF37?text=${encodeURIComponent(title)}`}
+                    />
+                    <div className="absolute bottom-0 left-0 right-0 bg-deep-blue/80 text-white text-center py-2 text-sm font-semibold">
+                      {title}
+                    </div>
+                  </div>
+                ))}
+              </>
+            )}
           </div>
-          <p className="text-white/60">&copy; 2025 The Servants. All rights reserved. | Built with ❤️ for humanity</p>
+        </div>
+      </section>
+
+      {/* Contact Form */}
+      <section id="contact" className="py-20 bg-gray-50">
+        <div className="container mx-auto px-4">
+          <div className="max-w-2xl mx-auto">
+            <Card>
+              <CardHeader className="text-center">
+                <CardTitle className="text-3xl text-deep-blue">Contact Us</CardTitle>
+                <CardDescription className="text-lg">
+                  If you have any questions, please feel free to contact us. We will answer as soon as possible!
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleContactSubmit} className="space-y-6">
+                  <div>
+                    <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">Your name</label>
+                    <Input id="name" name="name" required className="w-full" />
+                  </div>
+                  <div>
+                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">Your e-mail</label>
+                    <Input id="email" name="email" type="email" required className="w-full" />
+                  </div>
+                  <div>
+                    <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-2">Your message</label>
+                    <Textarea id="message" name="message" rows={5} required className="w-full" />
+                  </div>
+                  <Button type="submit" className="w-full bg-deep-blue text-white hover:bg-deep-blue/90 text-lg py-6">
+                    Submit
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* Establishment Quote */}
+      <section className="py-16 bg-deep-blue text-white">
+        <div className="container mx-auto px-4">
+          <div className="grid md:grid-cols-2 gap-8 items-center">
+            <div className="flex justify-center">
+              <img src="/img/logo.png" alt="Logo" className="max-w-xs" onError={(e) => e.target.style.display = 'none'} />
+            </div>
+            <div>
+              <h3 className="text-2xl font-bold text-gold mb-4">Establishment</h3>
+              <p className="text-lg leading-relaxed">
+                With the blessings of Almighty and Ahlul Bayt, <span className="font-bold text-gold">The Servants</span> Group came into existence on 1st August 2021 in the city of Jaunpur. In pursuit of its goals, the Servants have begun their regular work for the welfare of society.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Back to Top Button */}
+      {showBackToTop && (
+        <button
+          onClick={() => scrollTo('home')}
+          className="fixed bottom-8 right-8 bg-gold text-deep-blue p-4 rounded-full shadow-lg hover:bg-gold/90 transition-all z-50 animate-bounce"
+          aria-label="Back to top"
+        >
+          <ArrowUp className="h-6 w-6" />
+        </button>
+      )}
+
+      {/* Footer */}
+      <footer className="bg-deep-blue text-white py-6">
+        <div className="container mx-auto px-4 text-center">
+          <p className="text-white/80">&copy; 2025 The Servants. All rights reserved. | Built with ❤️ for humanity</p>
         </div>
       </footer>
     </div>
